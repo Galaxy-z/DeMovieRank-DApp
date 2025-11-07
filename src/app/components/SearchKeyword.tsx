@@ -1,6 +1,11 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { readContract } from 'wagmi/actions';
+
+import { config } from '../providers';
+import { MOVIE_RATING_ABI, MOVIE_RATING_ADDRESS } from '../contracts/movieRating';
 
 interface MovieResult {
   id: number;
@@ -27,6 +32,8 @@ export const SearchKeyword: React.FC<Props> = ({ className }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  const [ratingsLoading, setRatingsLoading] = useState(false);
+  const [contractRatings, setContractRatings] = useState<Record<string, number | null>>({});
 
   const fetchMovies = useCallback(
     async (searchTerm: string, targetPage: number) => {
@@ -77,6 +84,54 @@ export const SearchKeyword: React.FC<Props> = ({ className }) => {
       controllerRef.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    // Fetch on-chain average ratings for the current search results.
+    let cancelled = false;
+    if (!results.length) {
+      setContractRatings({});
+      setRatingsLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const fetchRatings = async () => {
+      setRatingsLoading(true);
+      setContractRatings({});
+      try {
+        const entries = await Promise.all(
+          results.map(async movie => {
+            const movieId = String(movie.id);
+            try {
+              const value = (await readContract(config, {
+                address: MOVIE_RATING_ADDRESS,
+                abi: MOVIE_RATING_ABI,
+                functionName: 'getAverageRating',
+                args: [movieId],
+              })) as bigint;
+              return [movieId, Number(value)] as const;
+            } catch {
+              return [movieId, null] as const;
+            }
+          })
+        );
+        if (!cancelled) {
+          setContractRatings(Object.fromEntries(entries));
+        }
+      } finally {
+        if (!cancelled) {
+          setRatingsLoading(false);
+        }
+      }
+    };
+
+    fetchRatings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [results]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -159,34 +214,49 @@ export const SearchKeyword: React.FC<Props> = ({ className }) => {
             {results.map(movie => {
               const imageUrl = movie.poster_path ? `${IMAGE_BASE}${movie.poster_path}` : null;
               return (
-                <li
-                  key={movie.id}
-                  className="flex gap-3 rounded border border-gray-200 bg-white p-3 shadow-sm"
-                >
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={movie.title}
-                      className="h-24 w-16 flex-shrink-0 rounded object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-24 w-16 flex-shrink-0 items-center justify-center rounded bg-gray-200 text-xs text-gray-500">
-                      无海报
+                <li key={movie.id}>
+                  <Link
+                    href={`/movie/${movie.id}`}
+                    className="group flex gap-3 rounded border border-gray-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                  >
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={movie.title}
+                        className="h-24 w-16 flex-shrink-0 rounded object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-24 w-16 flex-shrink-0 items-center justify-center rounded bg-gray-200 text-xs text-gray-500">
+                        无海报
+                      </div>
+                    )}
+                    <div className="flex flex-1 flex-col gap-1">
+                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">
+                        {movie.title}
+                      </h3>
+                      <div className="text-xs text-gray-500">
+                        {movie.release_date ? `上映：${movie.release_date}` : '上映时间未知'}
+                        {typeof movie.vote_average === 'number' && movie.vote_average > 0
+                          ? ` · TMDB评分：${movie.vote_average.toFixed(1)}`
+                          : ''}
+                      </div>
+                      <div className="text-xs text-indigo-600">
+                        本站评分：
+                        {(() => {
+                          const key = String(movie.id);
+                          const rating = contractRatings[key];
+                          if (ratingsLoading && rating === undefined) return '加载中...';
+                          if (rating === null) return '获取失败';
+                          if (!rating) return '暂无评分';
+                          return `${rating} / 10`;
+                        })()}
+                      </div>
+                      <p className="max-h-24 overflow-hidden text-xs text-gray-600">
+                        {movie.overview || '暂无简介'}
+                      </p>
                     </div>
-                  )}
-                  <div className="flex flex-1 flex-col gap-1">
-                    <h3 className="text-sm font-semibold text-gray-900">{movie.title}</h3>
-                    <div className="text-xs text-gray-500">
-                      {movie.release_date ? `上映：${movie.release_date}` : '上映时间未知'}
-                      {typeof movie.vote_average === 'number' && movie.vote_average > 0
-                        ? ` · 评分：${movie.vote_average.toFixed(1)}`
-                        : ''}
-                    </div>
-                    <p className="max-h-24 overflow-hidden text-xs text-gray-600">
-                      {movie.overview || '暂无简介'}
-                    </p>
-                  </div>
+                  </Link>
                 </li>
               );
             })}

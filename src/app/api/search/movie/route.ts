@@ -72,6 +72,7 @@ export async function GET(req: NextRequest) {
   const endpoint = new URL('https://api.themoviedb.org/3/search/movie');
   endpoint.searchParams.set('query', q);
   endpoint.searchParams.set('page', String(page));
+  endpoint.searchParams.set('language', 'zh-CN');
 
   const headers: Record<string, string> = { accept: 'application/json' };
   if (token) {
@@ -79,6 +80,13 @@ export async function GET(req: NextRequest) {
   } else if (apiKey) {
     endpoint.searchParams.set('api_key', apiKey);
   }
+
+  const curlHeaders: string[] = [`-H ${JSON.stringify('accept: application/json')}`];
+  if (token) {
+    curlHeaders.push(`-H ${JSON.stringify(`Authorization: Bearer ${token}`)}`);
+  }
+  const curlCommand = `curl ${curlHeaders.join(' ')} ${JSON.stringify(endpoint.toString())}`;
+  console.log('[TMDB] try:', curlCommand);
 
   let dispatcher: any;
   const proxyUrl = process.env.PROXY_URL || process.env.HTTPS_PROXY || process.env.HTTP_PROXY;

@@ -1,22 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "去中心化电影评分",
-  description: "基于区块链的透明电影评分系统",
-};
+import { NavBar } from "./components/NavBar";
+import { ViewportHeightSetter } from "@/app/components/ViewportHeightSetter";
 
 export default function RootLayout({
   children,
@@ -25,10 +11,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Providers>{children}</Providers>
+      <body className="antialiased">
+        <Providers>
+          {/* 动态设置 --vh，解决移动端地址栏伸缩导致的 100vh 偏差 */}
+          <ViewportHeightSetter />
+          <div className="flex min-h-screen flex-col">
+            <NavBar />
+            <main className="flex flex-1 flex-col">{children}</main>
+          </div>
+        </Providers>
       </body>
     </html>
   );

@@ -5,12 +5,12 @@
   --foreground: #171717;
 }
 
-@theme inline {
+/* @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
+} */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* 视窗高度自适应支持：--vh 在 JS 动态设置，解决移动端地址栏影响 */
+:root { --vh: 1vh; }
+html, body { height: 100%; }
+/* Tailwind arbitrary class已可用，但添加一个语义化的工具类方便复用 */
+.h-screen-dvh { height: calc(var(--vh, 1vh) * 100); }

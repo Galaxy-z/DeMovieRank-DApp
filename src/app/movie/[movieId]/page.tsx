@@ -227,7 +227,9 @@ export default async function MovieDetailPage({ params }: { params: Promise<{ mo
             <img
               src={posterUrl}
               alt={movie.title}
-              className="h-auto w-40 max-h-[28rem] rounded-xl shadow-2xl sm:w-48 md:w-56"
+              /* 保持原始长宽比：不再强制设定固定宽度，使用自适应宽度，高度按最大高度限制 */
+              className="h-auto w-auto max-h-[28rem] rounded-xl shadow-2xl"
+              style={{ objectFit: 'contain' }}
             />
           ) : (
             <div className="flex h-80 w-56 items-center justify-center rounded-xl bg-slate-800 text-sm text-slate-300">

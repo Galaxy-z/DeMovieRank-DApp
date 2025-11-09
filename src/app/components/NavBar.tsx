@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { SearchModal } from "./SearchModal";
 
 const shortenAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
 
@@ -17,38 +18,81 @@ export function NavBar() {
   const preferredConnector = useMemo(() => connectors?.[0], [connectors]);
   const connectLabel = isPending ? "连接中..." : "连接钱包";
 
+  const [searchOpen, setSearchOpen] = useState(false);
+
   return (
-    <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-      <h1 className="text-2xl font-bold">DeMovieRank</h1>
-      <div className="flex items-center gap-3 min-h-[40px]">
-        {/* 在还未 mounted 时渲染与服务端一致的占位（按钮），避免首屏结构差异 */}
-        {!mounted ? (
+    <>
+      <nav className="relative flex items-center bg-gray-800 px-6 py-4 text-white">
+        <h1 className="text-2xl font-bold mr-6">DeMovieRank</h1>
+        {/* 居中的搜索触发器：absolute 定位 */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
           <button
-            aria-hidden
-            className="rounded bg-blue-500 px-4 py-2 text-sm font-semibold text-white opacity-70"
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm text-white backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
           >
-            {"连接钱包"}
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4 text-white/70"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span className="text-white/80">搜索电影</span>
+            <span className="hidden lg:inline text-xs text-white/40">Ctrl+K</span>
           </button>
-        ) : isConnected && address ? (
-          <>
-            <span className="hidden text-sm text-gray-300 sm:inline">{shortenAddress(address)}</span>
+        </div>
+        {/* 移动端图标（不使用 absolute，避免被遮挡） */}
+        <button
+          type="button"
+          aria-label="搜索"
+          onClick={() => setSearchOpen(true)}
+          className="md:hidden rounded-full bg-white/10 p-2 text-white backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+        >
+          <svg
+            aria-hidden="true"
+            className="h-5 w-5 text-white"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+        <div className="ml-auto flex items-center gap-3 min-h-[40px]">
+          {!mounted ? (
             <button
-              onClick={() => disconnect()}
-              className="rounded bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
+              aria-hidden
+              className="rounded bg-blue-500 px-4 py-2 text-sm font-semibold text-white opacity-70"
             >
-              断开连接
+              {"连接钱包"}
             </button>
-          </>
-        ) : (
+          ) : isConnected && address ? (
+            <>
+              <span className="hidden text-sm text-gray-300 sm:inline">{shortenAddress(address)}</span>
+              <button
+                onClick={() => disconnect()}
+                className="rounded bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
+              >
+                断开连接
+              </button>
+            </>
+          ) : (
             <button
-                onClick={() => preferredConnector && connect({ connector: preferredConnector })}
-                disabled={!preferredConnector || isPending}
-                className="rounded bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-400"
+              onClick={() => preferredConnector && connect({ connector: preferredConnector })}
+              disabled={!preferredConnector || isPending}
+              className="rounded bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-400"
             >
-                {connectLabel}
+              {connectLabel}
             </button>
-        )}
-      </div>
-    </nav>
+          )}
+        </div>
+      </nav>
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   );
 }

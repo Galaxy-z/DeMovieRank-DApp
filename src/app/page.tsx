@@ -1,7 +1,6 @@
 // app/page.tsx
 'use client';
 
-import SearchKeyword from './components/SearchKeyword';
 import React from 'react';
 
 // 说明：外层 layout 已提供 <main className="flex-1 flex flex-col min-h-screen">。
@@ -16,7 +15,7 @@ export default function Home() {
             DeMovieRank DApp
           </h1>
         </div>
-        <SearchKeyword className="mx-auto" />
+        <p className="text-sm text-gray-600">使用顶部导航栏的“搜索电影”即可打开模态框进行搜索。</p>
       </div>
     </div>
   );

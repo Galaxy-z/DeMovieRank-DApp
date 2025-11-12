@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ethers } from "ethers";
 import {
-  MOVIE_FAN_SBT_ADDRESS,
-  MOVIE_FAN_SBT_ABI,
-} from "@/app/contracts/MovieFanSBT";
+  MOVIE_FAN_S_B_T_ADDRESS,
+  MOVIE_FAN_S_B_T_ABI,
+} from "@/app/contracts/movieFanSBT";
 
 export async function POST(request: NextRequest) {
   try {
@@ -98,8 +98,8 @@ export async function POST(request: NextRequest) {
 
     // 创建合约实例
     const contract = new ethers.Contract(
-      MOVIE_FAN_SBT_ADDRESS,
-      MOVIE_FAN_SBT_ABI,
+      MOVIE_FAN_S_B_T_ADDRESS,
+      MOVIE_FAN_S_B_T_ABI,
       wallet
     );
 

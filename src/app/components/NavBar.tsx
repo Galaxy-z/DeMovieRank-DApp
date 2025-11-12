@@ -10,7 +10,7 @@ import {
   useReadContract,
 } from "wagmi";
 import { SearchModal } from "./SearchModal";
-import { MOVIE_FAN_SBT_CONTRACT } from "../contracts/MovieFanSBT";
+import { MOVIE_FAN_S_B_T_CONTRACT } from "../contracts/movieFanSBT";
 
 const shortenAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
 const HCAPTCHA_SITEKEY =
@@ -40,7 +40,7 @@ export function NavBar() {
     isFetching: isFanLoading,
     refetch: refetchIsFan,
   } = useReadContract({
-    ...MOVIE_FAN_SBT_CONTRACT,
+    ...MOVIE_FAN_S_B_T_CONTRACT,
     functionName: "isMovieFan",
     args: [fanAddress],
     query: {
@@ -53,7 +53,7 @@ export function NavBar() {
     isFetching: profileLoading,
     refetch: refetchProfile,
   } = useReadContract({
-    ...MOVIE_FAN_SBT_CONTRACT,
+    ...MOVIE_FAN_S_B_T_CONTRACT,
     functionName: "getProfile",
     args: [fanAddress],
     query: {
@@ -147,6 +147,25 @@ export function NavBar() {
       captchaRef.current?.resetCaptcha?.();
     }
   };
+
+  // 当钱包地址切换时，重置领取状态，避免前一个账户的 "领取成功" 残留导致当前账户按钮不可用
+  useEffect(() => {
+    setMintStatus("idle");
+    setMintError(null);
+    // 重置验证码，确保新地址重新验证
+    captchaRef.current?.resetCaptcha?.();
+  }, [address]);
+
+  // 当 isFan 结果返回后，如果显示当前地址不是粉丝但状态仍是 success（可能是前一个地址残留），复位为 idle
+  useEffect(() => {
+    if (isFan === false && mintStatus === "success") {
+      setMintStatus("idle");
+    }
+    // 如果已经是粉丝，则不需要持有 success 状态（按钮会被替换成资料卡片）
+    if (isFan === true && mintStatus !== "idle") {
+      setMintStatus("idle");
+    }
+  }, [isFan, mintStatus]);
 
   const renderSBTSection = () => {
     if (!mounted || !isConnected || !address) return null;

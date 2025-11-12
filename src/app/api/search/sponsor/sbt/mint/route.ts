@@ -7,12 +7,74 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const { fanAddress } = await request.json();
+    const { fanAddress, hcaptchaToken } = await request.json();
 
     // 验证地址格式
     if (!fanAddress || !ethers.isAddress(fanAddress)) {
       return NextResponse.json(
         { error: "Invalid fan address" },
+        { status: 400 }
+      );
+    }
+
+    if (!hcaptchaToken || typeof hcaptchaToken !== "string") {
+      return NextResponse.json(
+        { error: "Missing hCaptcha verification" },
+        { status: 400 }
+      );
+    }
+
+    const hcaptchaSecret = process.env.HCAPTCHA_SECRET;
+    if (!hcaptchaSecret) {
+      console.error("HCAPTCHA_SECRET not configured in environment");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    type HCaptchaVerifyResponse = {
+      success: boolean;
+      challenge_ts?: string;
+      hostname?: string;
+      credit?: boolean;
+      "error-codes"?: string[];
+    };
+
+    const remoteIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    const verificationPayload = new URLSearchParams({
+      secret: hcaptchaSecret,
+      response: hcaptchaToken,
+    });
+
+    if (remoteIp) {
+      verificationPayload.append("remoteip", remoteIp);
+    }
+
+    const verificationResponse = await fetch("https://hcaptcha.com/siteverify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: verificationPayload,
+    });
+
+    if (!verificationResponse.ok) {
+      console.error("hCaptcha verification request failed", verificationResponse.status);
+      return NextResponse.json(
+        { error: "Failed to verify hCaptcha" },
+        { status: 502 }
+      );
+    }
+
+    const verificationData = (await verificationResponse.json()) as HCaptchaVerifyResponse;
+
+    if (!verificationData.success) {
+      return NextResponse.json(
+        {
+          error: "hCaptcha verification failed",
+          details: verificationData["error-codes"] ?? [],
+        },
         { status: 400 }
       );
     }

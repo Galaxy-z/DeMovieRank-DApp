@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+import type { ComponentRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useAccount,
   useConnect,
@@ -11,6 +13,8 @@ import { SearchModal } from "./SearchModal";
 import { MOVIE_FAN_SBT_CONTRACT } from "../contracts/MovieFanSBT";
 
 const shortenAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
+const HCAPTCHA_SITEKEY =
+  process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ?? "95f88ab2-3bd2-4130-8aa0-62a0b79e2c6c";
 
 export function NavBar() {
   const { address, isConnected } = useAccount();
@@ -27,6 +31,7 @@ export function NavBar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mintStatus, setMintStatus] = useState<"idle" | "signing" | "success" | "error">("idle");
   const [mintError, setMintError] = useState<string | null>(null);
+  const captchaRef = useRef<ComponentRef<typeof HCaptcha>>(null);
 
   const fanAddress = address ?? "0x0000000000000000000000000000000000000000";
 
@@ -56,34 +61,90 @@ export function NavBar() {
     },
   });
 
-  const handleMintSBT = async () => {
-    if (!address) return;
-    setMintError(null);
-    try {
-      setMintStatus("signing");
-      
-      // 调用后端API mint SBT（后端中继器模式）
-      const response = await fetch("/api/search/sponsor/sbt/mint", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ fanAddress: address }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "领取失败");
+  const submitMint = useCallback(
+    async (token: string) => {
+      if (!address) {
+        setMintError("未检测到有效的钱包地址");
+        setMintStatus("error");
+        captchaRef.current?.resetCaptcha?.();
+        return;
       }
 
-      setMintStatus("success");
-      await refetchIsFan();
-      await refetchProfile();
-    } catch (error) {
-      const message = (error as { shortMessage?: string; message?: string })?.shortMessage;
-      setMintError(message || (error as Error)?.message || "领取失败，请重试");
+      try {
+        const response = await fetch("/api/search/sponsor/sbt/mint", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ fanAddress: address, hcaptchaToken: token }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error((data as { error?: string }).error || "领取失败");
+        }
+
+        setMintStatus("success");
+        await refetchIsFan();
+        await refetchProfile();
+      } catch (error) {
+        const message = (error as { shortMessage?: string; message?: string })?.shortMessage;
+        setMintError(message || (error as Error)?.message || "领取失败，请重试");
+        setMintStatus("error");
+      } finally {
+        captchaRef.current?.resetCaptcha?.();
+      }
+    },
+    [address, refetchIsFan, refetchProfile]
+  );
+
+  const handleCaptchaVerify = useCallback(
+    async (token: string) => {
+      if (!token) {
+        setMintError("验证码验证失败，请重试");
+        setMintStatus("error");
+        captchaRef.current?.resetCaptcha?.();
+        return;
+      }
+
+      await submitMint(token);
+    },
+    [submitMint]
+  );
+
+  const handleCaptchaError = useCallback(() => {
+    setMintError("验证码加载失败，请重试");
+    setMintStatus("error");
+    captchaRef.current?.resetCaptcha?.();
+  }, []);
+
+  const handleCaptchaExpire = useCallback(() => {
+    setMintError("验证码已过期，请重试");
+    setMintStatus("idle");
+    captchaRef.current?.resetCaptcha?.();
+  }, []);
+
+  const handleMintSBT = async () => {
+    if (!address || mintStatus === "signing") return;
+
+    setMintError(null);
+
+    if (!captchaRef.current) {
+      setMintError("验证码尚未加载完成，请稍后再试");
       setMintStatus("error");
+      return;
+    }
+
+    setMintStatus("signing");
+
+    try {
+      await captchaRef.current.execute?.();
+    } catch (error) {
+      console.error("Failed to execute hCaptcha:", error);
+      setMintError("验证码启动失败，请刷新后重试");
+      setMintStatus("error");
+      captchaRef.current?.resetCaptcha?.();
     }
   };
 
@@ -112,6 +173,14 @@ export function NavBar() {
 
     return (
       <div className="flex flex-col items-end gap-1 text-right text-xs text-white/80">
+        <HCaptcha
+          ref={captchaRef}
+          sitekey={HCAPTCHA_SITEKEY}
+          size="invisible"
+          onVerify={handleCaptchaVerify}
+          onError={handleCaptchaError}
+          onExpire={handleCaptchaExpire}
+        />
         <button
           type="button"
           onClick={handleMintSBT}

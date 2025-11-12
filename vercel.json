@@ -3,8 +3,5 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install --loglevel verbose",
   "framework": "nextjs",
-  "outputDirectory": ".next",
-  "env": {
-    "NPM_CONFIG_REGISTRY": "https://registry.npmmirror.com"
-  }
+  "outputDirectory": ".next"
 }

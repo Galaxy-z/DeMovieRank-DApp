@@ -6,12 +6,9 @@ import {
   useConnect,
   useDisconnect,
   useReadContract,
-  useWriteContract,
 } from "wagmi";
-import { waitForTransactionReceipt } from "wagmi/actions";
 import { SearchModal } from "./SearchModal";
 import { MOVIE_FAN_SBT_CONTRACT } from "../contracts/MovieFanSBT";
-import { config } from "../providers";
 
 const shortenAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
 
@@ -19,7 +16,6 @@ export function NavBar() {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
-  const { writeContractAsync } = useWriteContract();
 
   // 防止 hydration mismatch：仅在客户端挂载后再渲染依赖钱包状态的差异部分
   const [mounted, setMounted] = useState(false);
@@ -29,7 +25,7 @@ export function NavBar() {
   const connectLabel = isPending ? "连接中..." : "连接钱包";
 
   const [searchOpen, setSearchOpen] = useState(false);
-  const [mintStatus, setMintStatus] = useState<"idle" | "signing" | "confirming" | "success" | "error">("idle");
+  const [mintStatus, setMintStatus] = useState<"idle" | "signing" | "success" | "error">("idle");
   const [mintError, setMintError] = useState<string | null>(null);
 
   const fanAddress = address ?? "0x0000000000000000000000000000000000000000";
@@ -65,13 +61,22 @@ export function NavBar() {
     setMintError(null);
     try {
       setMintStatus("signing");
-      const hash = await writeContractAsync({
-        ...MOVIE_FAN_SBT_CONTRACT,
-        functionName: "mintSBT",
-        args: [address],
+      
+      // 调用后端API mint SBT（后端中继器模式）
+      const response = await fetch("/api/search/sponsor/sbt/mint", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fanAddress: address }),
       });
-      setMintStatus("confirming");
-      await waitForTransactionReceipt(config, { hash });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "领取失败");
+      }
+
       setMintStatus("success");
       await refetchIsFan();
       await refetchProfile();
@@ -110,16 +115,14 @@ export function NavBar() {
         <button
           type="button"
           onClick={handleMintSBT}
-          disabled={mintStatus === "signing" || mintStatus === "confirming" || mintStatus === "success"}
+          disabled={mintStatus === "signing" || mintStatus === "success"}
           className="rounded bg-emerald-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-400"
         >
           {mintStatus === "signing"
-            ? "等待签名..."
-            : mintStatus === "confirming"
-              ? "上链确认中..."
-              : mintStatus === "success"
-                ? "领取成功"
-                : "领取电影粉丝SBT"}
+            ? "正在领取..."
+            : mintStatus === "success"
+              ? "领取成功"
+              : "领取电影粉丝SBT"}
         </button>
         {mintError && <span className="text-red-300">{mintError}</span>}
       </div>

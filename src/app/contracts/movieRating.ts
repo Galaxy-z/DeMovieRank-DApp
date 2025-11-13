@@ -1,10 +1,10 @@
 // Auto-generated from contract deployment
-// Generated at: 2025-11-12T07:33:49.426Z
+// Generated at: 2025-11-12T13:22:55.813Z
 // Chain ID: 31337
-// Commit: 05544d5
+// Commit: 3f454c9
 // DO NOT EDIT MANUALLY - changes will be overwritten
 
-export const MOVIE_RATING_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512' as const;
+export const MOVIE_RATING_ADDRESS = '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9' as const;
 
 export const MOVIE_RATING_ABI = [
   {
@@ -25,8 +25,8 @@ export const MOVIE_RATING_ABI = [
     "outputs": [
       {
         "name": "",
-        "type": "uint8",
-        "internalType": "uint8"
+        "type": "uint16",
+        "internalType": "uint16"
       }
     ],
     "stateMutability": "view"
@@ -99,8 +99,8 @@ export const MOVIE_RATING_ABI = [
     "outputs": [
       {
         "name": "",
-        "type": "uint8",
-        "internalType": "uint8"
+        "type": "uint16",
+        "internalType": "uint16"
       }
     ],
     "stateMutability": "view"

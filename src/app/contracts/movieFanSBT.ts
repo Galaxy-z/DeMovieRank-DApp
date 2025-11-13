@@ -1,10 +1,10 @@
 // Auto-generated from contract deployment
-// Generated at: 2025-11-12T07:33:49.419Z
+// Generated at: 2025-11-12T13:22:55.806Z
 // Chain ID: 31337
-// Commit: 05544d5
+// Commit: 3f454c9
 // DO NOT EDIT MANUALLY - changes will be overwritten
 
-export const MOVIE_FAN_S_B_T_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3' as const;
+export const MOVIE_FAN_S_B_T_ADDRESS = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9' as const;
 
 export const MOVIE_FAN_S_B_T_ABI = [
   {
@@ -155,6 +155,19 @@ export const MOVIE_FAN_S_B_T_ABI = [
   },
   {
     "type": "function",
+    "name": "increaseTotalRatings",
+    "inputs": [
+      {
+        "name": "fan",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "isApprovedForAll",
     "inputs": [
       {
@@ -256,6 +269,19 @@ export const MOVIE_FAN_S_B_T_ABI = [
   },
   {
     "type": "function",
+    "name": "ratingContract",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "renounceOwnership",
     "inputs": [],
     "outputs": [],
@@ -325,6 +351,19 @@ export const MOVIE_FAN_S_B_T_ABI = [
         "name": "approved",
         "type": "bool",
         "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setRatingContract",
+    "inputs": [
+      {
+        "name": "newRatingContract",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -540,6 +579,19 @@ export const MOVIE_FAN_S_B_T_ABI = [
   },
   {
     "type": "event",
+    "name": "RatingContractUpdated",
+    "inputs": [
+      {
+        "name": "ratingContract",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "ReputationUpdated",
     "inputs": [
       {
@@ -706,6 +758,17 @@ export const MOVIE_FAN_S_B_T_ABI = [
   },
   {
     "type": "error",
+    "name": "InvalidRatingContract",
+    "inputs": [
+      {
+        "name": "ratingContract",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "OwnableInvalidOwner",
     "inputs": [
       {
@@ -721,6 +784,17 @@ export const MOVIE_FAN_S_B_T_ABI = [
     "inputs": [
       {
         "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "UnauthorizedCaller",
+    "inputs": [
+      {
+        "name": "caller",
         "type": "address",
         "internalType": "address"
       }

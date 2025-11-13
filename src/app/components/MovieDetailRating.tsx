@@ -1,11 +1,12 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
 import { readContract, waitForTransactionReceipt, writeContract } from 'wagmi/actions';
 
 import { config } from '../providers';
 import { MOVIE_RATING_ABI, MOVIE_RATING_ADDRESS } from '../contracts/movieRating';
+import { MOVIE_FAN_S_B_T_CONTRACT } from '../contracts/movieFanSBT';
 
 interface Props {
   movieId: string;
@@ -15,8 +16,23 @@ interface Props {
 type FetchState = 'idle' | 'loading' | 'success' | 'error';
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 export function MovieDetailRating({ movieId, className }: Props) {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
+  const fanCheckAddress = address ?? ZERO_ADDRESS;
+  const {
+    data: isFanRaw,
+    isFetching: isFanLoading,
+  } = useReadContract({
+    ...MOVIE_FAN_S_B_T_CONTRACT,
+    functionName: 'isMovieFan',
+    args: [fanCheckAddress],
+    query: {
+      enabled: isConnected && !!address,
+    },
+  });
+  const hasFanSBT = isFanRaw === true;
 
   const [fetchState, setFetchState] = useState<FetchState>('idle');
   const [rating, setRating] = useState<number | null>(null);
@@ -76,6 +92,12 @@ export function MovieDetailRating({ movieId, className }: Props) {
     if (!isConnected) {
       setSubmitState('error');
       setSubmitMessage('请先连接钱包再进行评分。');
+      return;
+    }
+
+    if (!hasFanSBT) {
+      setSubmitState('error');
+      setSubmitMessage('评分前请先领取电影粉丝 SBT。');
       return;
     }
 
@@ -140,16 +162,20 @@ export function MovieDetailRating({ movieId, className }: Props) {
           </div>
           <button
             type="submit"
-            disabled={!isConnected || submitState === 'loading'}
+            disabled={!isConnected || !hasFanSBT || submitState === 'loading'}
             className="inline-flex w-full items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-sky-700/60"
           >
             {submitState === 'loading' ? '提交中...' : '提交评分'}
           </button>
         </form>
         <p className="mt-2 text-xs text-slate-400">
-          {isConnected
-            ? submitMessage || '评分需等待区块确认后更新平均值。'
-            : '请先连接钱包即可提交评分。'}
+          {!isConnected
+            ? '请先连接钱包即可提交评分。'
+            : isFanLoading
+              ? '正在检查粉丝身份，请稍候。'
+              : hasFanSBT
+                ? submitMessage || '评分需等待区块确认后更新平均值。'
+                : submitMessage || '需要持有电影粉丝 SBT 才能进行评分。'}
         </p>
       </div>
     </div>

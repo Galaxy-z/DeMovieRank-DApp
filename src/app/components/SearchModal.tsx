@@ -197,7 +197,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ open, onClose }) => {
                 functionName: "getAverageRating",
                 args: [movieId],
               })) as bigint;
-              return [movieId, Number(value)] as const;
+              return [movieId, Number(value) / 100] as const;
             } catch {
               return [movieId, null] as const;
             }
@@ -219,21 +219,21 @@ export const SearchModal: React.FC<SearchModalProps> = ({ open, onClose }) => {
   return (
     <div aria-modal="true" role="dialog" className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:items-center">
       {/* 背景遮罩 + 模糊 */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" />
       <div
         ref={containerRef}
-        className="relative z-10 w-full max-w-3xl overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/80 to-white/60 p-6 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-xl dark:from-gray-800/90 dark:to-gray-800/70"
+        className="glass-panel relative z-10 w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900/80 p-6 shadow-2xl backdrop-blur-xl"
       >
         {/* 头部：输入框 + 关闭按钮 */}
-        <div className="flex items-center gap-3 pb-4">
-          <div className="flex w-full items-center gap-3 rounded-full border border-gray-200 bg-white/90 px-5 py-3 shadow-sm transition focus-within:border-blue-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-200/70 dark:border-gray-600 dark:bg-gray-700/80 dark:focus-within:border-blue-400">
+        <div className="flex items-center gap-3 pb-6">
+          <div className="flex w-full items-center gap-3 rounded-xl border border-slate-700 bg-slate-800/50 px-5 py-4 shadow-inner transition-all focus-within:border-sky-500/50 focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-sky-500/20">
             <svg
               aria-hidden="true"
-              className="h-5 w-5 text-gray-400 dark:text-gray-300"
+              className="h-5 w-5 text-slate-400"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.5"
+              strokeWidth="2"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.35-4.65a6 6 0 11-12 0 6 6 0 0112 0z" />
             </svg>
@@ -246,61 +246,105 @@ export const SearchModal: React.FC<SearchModalProps> = ({ open, onClose }) => {
                 setQuery(e.target.value);
                 if (error) setError(null);
               }}
-              className="flex-1 border-0 bg-transparent text-base text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-0 dark:text-gray-100 dark:placeholder:text-gray-400"
+              className="flex-1 border-0 bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none focus:ring-0"
             />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                className="text-slate-500 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
         {/* 状态提示 */}
-        <div className="min-h-[120px] max-h-[60vh] overflow-y-auto pr-1 space-y-4">
+        <div className="min-h-[120px] max-h-[60vh] overflow-y-auto pr-2 space-y-4 custom-scrollbar">
           {loading && results.length === 0 && (
-            <div className="rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">正在加载...</div>
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+              <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p>正在搜索...</p>
+            </div>
           )}
           {error && (
-            <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400 dark:bg-red-900/40 dark:text-red-200">{error}</div>
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400 text-center">
+              {error}
+            </div>
           )}
           {!loading && !error && executedQuery && results.length === 0 && (
-            <div className="rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">未找到相关电影。</div>
+            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+              <span className="text-4xl mb-2">🤔</span>
+              <p>未找到相关电影</p>
+            </div>
           )}
+          
           {results.length > 0 && (
             <ul className="grid gap-4 sm:grid-cols-2">
               {results.map((movie) => {
                 const imageUrl = movie.poster_path ? `${IMAGE_BASE}${movie.poster_path}` : null;
+                const rating = contractRatings[String(movie.id)];
+                
                 return (
                   <li key={movie.id}>
                     <Link
                       href={`/movie/${movie.id}`}
                       onClick={() => onClose()}
-                      className="group flex h-40 gap-3 rounded border border-gray-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-gray-600 dark:bg-gray-800"
+                      className="group flex h-44 gap-4 rounded-xl border border-slate-700/30 bg-slate-800/40 p-3 transition-all hover:bg-slate-700/60 hover:border-slate-600 hover:shadow-lg hover:-translate-y-0.5"
                     >
                       {imageUrl ? (
                         <img
                           src={imageUrl}
                           alt={movie.title}
-                          className="h-full w-24 flex-shrink-0 rounded object-cover object-center"
+                          className="h-full w-28 flex-shrink-0 rounded-lg object-cover object-center shadow-md group-hover:shadow-xl transition-shadow"
                           loading="lazy"
                         />
                       ) : (
-                        <div className="flex h-full w-24 flex-shrink-0 items-center justify-center rounded bg-gray-200 text-xs text-gray-500 dark:bg-gray-600 dark:text-gray-200">无海报</div>
-                      )}
-                      <div className="flex flex-1 flex-col gap-1 overflow-hidden">
-                        <h3 className="line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-blue-600 dark:text-gray-100">{movie.title}</h3>
-                        <div className="text-xs text-gray-500 dark:text-gray-300">
-                          {movie.release_date ? `上映：${movie.release_date}` : "上映时间未知"}
-                          {typeof movie.vote_average === "number" && movie.vote_average > 0 ? ` · TMDB评分：${movie.vote_average.toFixed(1)}` : ""}
+                        <div className="flex h-full w-28 flex-shrink-0 items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-500">
+                          无海报
                         </div>
-                        <div className="text-xs text-indigo-600 dark:text-indigo-400">
-                          本站评分：
+                      )}
+                      
+                      <div className="flex flex-1 flex-col justify-between py-1 overflow-hidden">
+                        <div>
+                          <h3 className="line-clamp-1 text-base font-bold text-white group-hover:text-sky-400 transition-colors">
+                            {movie.title}
+                          </h3>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                            <span>{movie.release_date?.split('-')[0] || "未知年份"}</span>
+                            {movie.vote_average && movie.vote_average > 0 && (
+                              <>
+                                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                                <span className="text-yellow-500/80">★ {movie.vote_average.toFixed(1)}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="line-clamp-2 text-xs text-slate-400 leading-relaxed my-2">
+                          {movie.overview || "暂无简介"}
+                        </p>
+
+                        <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/5">
+                          <span className="text-xs text-slate-500">链上评分</span>
                           {(() => {
-                            const key = String(movie.id);
-                            const rating = contractRatings[key];
-                            if (ratingsLoading && rating === undefined) return "加载中...";
-                            if (rating === null) return "获取失败";
-                            if (!rating) return "暂无评分";
-                            return `${rating} / 10`;
+                            if (ratingsLoading && rating === undefined) 
+                              return <span className="text-xs text-slate-500 animate-pulse">...</span>;
+                            if (rating === null) 
+                              return <span className="text-xs text-slate-600">暂无</span>;
+                            if (!rating) 
+                              return <span className="text-xs text-slate-600">暂无</span>;
+                            
+                            const scoreColor = rating >= 8 ? 'text-emerald-400' : rating >= 6 ? 'text-sky-400' : 'text-amber-400';
+                            return (
+                              <span className={`text-sm font-bold font-mono ${scoreColor}`}>
+                                {rating.toFixed(1)}
+                              </span>
+                            );
                           })()}
                         </div>
-                        <p className="line-clamp-4 text-xs text-gray-600 dark:text-gray-300">{movie.overview || "暂无简介"}</p>
                       </div>
                     </Link>
                   </li>
@@ -308,20 +352,21 @@ export const SearchModal: React.FC<SearchModalProps> = ({ open, onClose }) => {
               })}
             </ul>
           )}
+          
           {/* 底部 sentinel */}
           {results.length > 0 && (
-            <div ref={sentinelRef} className="h-10 w-full">
+            <div ref={sentinelRef} className="h-12 w-full flex items-center justify-center">
               {hasMore ? (
-                <div className="flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
-                  {loadingMore ? "加载更多..." : "滚动加载更多"}
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  {loadingMore && <div className="w-3 h-3 border border-slate-500 border-t-transparent rounded-full animate-spin"></div>}
+                  <span>{loadingMore ? "加载更多..." : "滚动加载更多"}</span>
                 </div>
               ) : (
-                <div className="flex items-center justify-center text-xs text-gray-400 dark:text-gray-600">已全部加载</div>
+                <div className="text-xs text-slate-600">已显示全部结果</div>
               )}
             </div>
           )}
         </div>
-        {/* 移除分页条，采用无限滚动 */}
       </div>
     </div>
   );

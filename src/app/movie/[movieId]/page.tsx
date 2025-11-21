@@ -309,8 +309,10 @@ export default async function MovieDetailPage({ params }: { params: Promise<{ mo
           </div>
         </div>
       </div>
-      <div className="mx-auto w-full max-w-3xl px-6 pb-16">
-        <MovieDetailRating movieId={String(movie.id)} />
+      <div className="mx-auto w-full max-w-6xl px-6 pb-16">
+        <div className="max-w-2xl">
+          <MovieDetailRating movieId={String(movie.id)} />
+        </div>
       </div>
     </div>
   );

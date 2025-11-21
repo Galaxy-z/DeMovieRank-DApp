@@ -63,7 +63,7 @@ export function MovieDetailRating({ movieId, className }: Props) {
           args: [trimmed],
         })) as bigint;
         if (cancelled) return;
-        setRating(Number(value));
+        setRating(Number(value) / 100);
         setFetchState('success');
       } catch (err) {
         console.error('[movie detail] rating fetch failed', err);
@@ -139,44 +139,67 @@ export function MovieDetailRating({ movieId, className }: Props) {
   };
 
   return (
-    <div className={`space-y-3 ${className ?? ''}`.trim()}>
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-white">链上平均评分</h3>
-        <p className="text-sm text-slate-200">{averageLabel}</p>
-      </div>
-      <div className="rounded-lg border border-slate-800 bg-slate-900/70 p-4 shadow-inner">
-        <form className="space-y-3" onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="movie-user-rating" className="text-sm font-medium text-slate-200">
-              我的评分（1-10）
+    <div className={`space-y-6 ${className ?? ''}`.trim()}>
+      <div className="glass-panel rounded-xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <span className="text-sky-400">★</span> 链上评分
+          </h3>
+          <div className="text-2xl font-bold text-sky-400 font-mono tracking-wider">
+            {fetchState === 'loading' ? (
+              <span className="animate-pulse text-slate-500">...</span>
+            ) : rating ? (
+              `${rating.toFixed(1)}`
+            ) : (
+              <span className="text-slate-500 text-lg">暂无</span>
+            )}
+            <span className="text-sm text-slate-500 ml-1">/ 10</span>
+          </div>
+        </div>
+        
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-3">
+            <label htmlFor="movie-user-rating" className="flex justify-between text-sm font-medium text-slate-300">
+              <span>我的评分</span>
+              <span className="text-white font-bold">{userRating} 分</span>
             </label>
             <input
               id="movie-user-rating"
-              type="number"
+              type="range"
               min={1}
               max={10}
+              step={1}
               value={userRating}
               onChange={event => setUserRating(Number(event.target.value))}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/60"
+              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400 transition-all"
             />
+            <div className="flex justify-between text-xs text-slate-500 px-1">
+              <span>1</span>
+              <span>5</span>
+              <span>10</span>
+            </div>
           </div>
+          
           <button
             type="submit"
             disabled={!isConnected || !hasFanSBT || submitState === 'loading'}
-            className="inline-flex w-full items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-sky-700/60"
+            className="w-full rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-sky-500/20 transition hover:shadow-sky-500/40 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
           >
             {submitState === 'loading' ? '提交中...' : '提交评分'}
           </button>
         </form>
-        <p className="mt-2 text-xs text-slate-400">
-          {!isConnected
-            ? '请先连接钱包即可提交评分。'
-            : isFanLoading
-              ? '正在检查粉丝身份，请稍候。'
-              : hasFanSBT
-                ? submitMessage || '评分需等待区块确认后更新平均值。'
-                : submitMessage || '需要持有电影粉丝 SBT 才能进行评分。'}
-        </p>
+        
+        <div className="mt-4 text-center border-t border-white/5 pt-4">
+          <p className={`text-xs ${submitState === 'error' ? 'text-red-400' : 'text-slate-400'}`}>
+            {!isConnected
+              ? '请先连接钱包即可提交评分。'
+              : isFanLoading
+                ? '正在检查粉丝身份...'
+                : hasFanSBT
+                  ? submitMessage || '评分需等待区块确认后更新平均值。'
+                  : submitMessage || '需要持有电影粉丝 SBT 才能进行评分。'}
+          </p>
+        </div>
       </div>
     </div>
   );

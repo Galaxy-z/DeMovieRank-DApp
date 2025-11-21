@@ -1,10 +1,10 @@
 // Auto-generated from contract deployment
-// Generated at: 2025-11-12T13:22:55.813Z
+// Generated at: 2025-11-21T02:22:18.069Z
 // Chain ID: 31337
-// Commit: 3f454c9
+// Commit: 57861ee
 // DO NOT EDIT MANUALLY - changes will be overwritten
 
-export const MOVIE_RATING_ADDRESS = '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9' as const;
+export const MOVIE_RATING_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512' as const;
 
 export const MOVIE_RATING_ABI = [
   {

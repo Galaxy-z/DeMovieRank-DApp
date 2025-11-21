@@ -10,7 +10,9 @@ import {
   useReadContract,
 } from "wagmi";
 import { SearchModal } from "./SearchModal";
+import { UserProfile } from "./UserProfile";
 import { MOVIE_FAN_S_B_T_CONTRACT } from "../contracts/movieFanSBT";
+import Link from "next/link";
 
 const shortenAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
 const HCAPTCHA_SITEKEY =
@@ -175,19 +177,7 @@ export function NavBar() {
     }
 
     if (isFan === true) {
-      const reputation = fanProfile?.reputation?.toString() ?? "0";
-      const totalRatings = fanProfile?.totalRatings?.toString() ?? "0";
-      const joinTimestamp = fanProfile?.jointAt ? Number(fanProfile.jointAt) * 1000 : null;
-      const joinedAt = joinTimestamp ? new Date(joinTimestamp).toLocaleString() : "-";
-
-      return (
-        <div className="rounded border border-white/20 bg-white/10 px-3 py-2 text-right text-xs text-white/80 shadow-sm backdrop-blur-sm">
-          <p className="font-semibold text-white">电影粉丝 SBT</p>
-          <p>声誉：{profileLoading ? "加载中..." : reputation}</p>
-          <p>加入时间：{profileLoading ? "加载中..." : joinedAt}</p>
-          <p>评分次数：{profileLoading ? "加载中..." : totalRatings}</p>
-        </div>
-      );
+      return <UserProfile profile={fanProfile as any} isLoading={profileLoading} />;
     }
 
     return (
@@ -219,18 +209,23 @@ export function NavBar() {
 
   return (
     <>
-      <nav className="relative flex items-center bg-gray-800 px-6 py-4 text-white">
-        <h1 className="text-2xl font-bold mr-6">DeMovieRank</h1>
+      <nav className="sticky top-0 z-50 flex items-center border-b border-white/5 bg-slate-950/80 px-6 py-4 text-white backdrop-blur-md transition-all">
+        <Link href="/" className="mr-8 flex items-center gap-2 transition hover:opacity-80">
+          <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-sky-400 to-purple-500 bg-clip-text text-transparent">
+            DeMovieRank
+          </span>
+        </Link>
+
         {/* 居中的搜索触发器：absolute 定位 */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm text-white backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+            className="pointer-events-auto group flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2 text-sm text-slate-300 backdrop-blur-sm transition hover:bg-white/10 hover:text-white hover:border-white/20"
           >
             <svg
               aria-hidden="true"
-              className="h-4 w-4 text-white/70"
+              className="h-4 w-4 text-slate-400 group-hover:text-white transition-colors"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -238,20 +233,21 @@ export function NavBar() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <span className="text-white/80">搜索电影</span>
-            <span className="hidden lg:inline text-xs text-white/40">Ctrl+K</span>
+            <span>搜索电影</span>
+            <span className="hidden lg:inline text-xs text-slate-500 group-hover:text-slate-400">Ctrl+K</span>
           </button>
         </div>
-        {/* 移动端图标（不使用 absolute，避免被遮挡） */}
+
+        {/* 移动端图标 */}
         <button
           type="button"
           aria-label="搜索"
           onClick={() => setSearchOpen(true)}
-          className="md:hidden rounded-full bg-white/10 p-2 text-white backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+          className="md:hidden rounded-full bg-white/5 p-2 text-slate-300 backdrop-blur-sm transition hover:bg-white/10 hover:text-white"
         >
           <svg
             aria-hidden="true"
-            className="h-5 w-5 text-white"
+            className="h-5 w-5"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -260,32 +256,34 @@ export function NavBar() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </button>
-        <div className="ml-auto flex min-h-[40px] flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
+
+        <div className="ml-auto flex min-h-[40px] flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-4">
           {renderSBTSection()}
           {!mounted ? (
             <button
               aria-hidden
-              className="rounded bg-blue-500 px-4 py-2 text-sm font-semibold text-white opacity-70"
+              className="rounded-full bg-sky-600/50 px-5 py-2 text-sm font-semibold text-white opacity-70"
             >
-              {"连接钱包"}
+              连接钱包
             </button>
           ) : isConnected && address ? (
-            <>
-              <div className="flex items-center gap-3">
-                <span className="hidden text-sm text-gray-300 sm:inline">{shortenAddress(address)}</span>
-                <button
-                  onClick={() => disconnect()}
-                  className="rounded bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
-                >
-                  断开连接
-                </button>
+            <div className="flex items-center gap-3">
+              <div className="hidden flex-col items-end text-xs sm:flex">
+                <span className="font-medium text-slate-200">已连接</span>
+                <span className="text-slate-500 font-mono">{shortenAddress(address)}</span>
               </div>
-            </>
+              <button
+                onClick={() => disconnect()}
+                className="rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500 hover:text-white"
+              >
+                断开
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => preferredConnector && connect({ connector: preferredConnector })}
               disabled={!preferredConnector || isPending}
-              className="rounded bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-400"
+              className="rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:shadow-sky-500/40 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {connectLabel}
             </button>

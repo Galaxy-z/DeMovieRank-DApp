@@ -12,7 +12,9 @@ import {
 import { SearchModal } from "./SearchModal";
 import { UserProfile } from "./UserProfile";
 import { MOVIE_FAN_S_B_T_CONTRACT } from "../contracts/movieFanSBT";
+import { POPCORN_TOKEN_CONTRACT } from "../contracts/popcornToken";
 import Link from "next/link";
+import { formatEther } from "viem";
 
 const shortenAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
 const HCAPTCHA_SITEKEY =
@@ -60,6 +62,16 @@ export function NavBar() {
     args: [fanAddress],
     query: {
       enabled: mounted && !!address && isFan === true,
+    },
+  });
+
+  const { data: popcornBalance } = useReadContract({
+    ...POPCORN_TOKEN_CONTRACT,
+    functionName: "balanceOf",
+    args: [address ?? "0x0000000000000000000000000000000000000000"],
+    query: {
+      enabled: mounted && !!address,
+      refetchInterval: 5000, // 每5秒刷新一次余额
     },
   });
 
@@ -268,6 +280,13 @@ export function NavBar() {
             </button>
           ) : isConnected && address ? (
             <div className="flex items-center gap-3">
+              {popcornBalance !== undefined && (
+                <div className="hidden flex-col items-end text-xs sm:flex mr-2">
+                  <span className="font-medium text-yellow-400">
+                    {Number(formatEther(popcornBalance as bigint)).toFixed(2)} POP
+                  </span>
+                </div>
+              )}
               <div className="hidden flex-col items-end text-xs sm:flex">
                 <span className="font-medium text-slate-200">已连接</span>
                 <span className="text-slate-500 font-mono">{shortenAddress(address)}</span>

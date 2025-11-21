@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import MovieDetailRating from '../../components/MovieDetailRating';
+import { MovieHypeMarket } from '../../components/MovieHypeMarket';
 
 const POSTER_BASE = 'https://image.tmdb.org/t/p/w342';
 const BACKDROP_BASE = 'https://image.tmdb.org/t/p/w1280';
@@ -310,8 +311,9 @@ export default async function MovieDetailPage({ params }: { params: Promise<{ mo
         </div>
       </div>
       <div className="mx-auto w-full max-w-6xl px-6 pb-16">
-        <div className="max-w-2xl">
+        <div className="grid gap-8 lg:grid-cols-2">
           <MovieDetailRating movieId={String(movie.id)} />
+          <MovieHypeMarket movieId={String(movie.id)} />
         </div>
       </div>
     </div>

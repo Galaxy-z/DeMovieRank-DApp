@@ -1,10 +1,10 @@
 // Auto-generated from contract deployment
-// Generated at: 2025-11-21T02:22:18.062Z
+// Generated at: 2025-11-21T06:41:29.500Z
 // Chain ID: 31337
 // Commit: 57861ee
 // DO NOT EDIT MANUALLY - changes will be overwritten
 
-export const MOVIE_FAN_S_B_T_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3' as const;
+export const MOVIE_FAN_S_B_T_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508' as const;
 
 export const MOVIE_FAN_S_B_T_ABI = [
   {
